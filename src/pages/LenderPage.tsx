@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Box, Button, Heading, Text } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
+import { Box, Heading, Text } from "@chakra-ui/react";
 import { ethers } from "ethers";
 import { loanLedgerABI } from "../contractABI";
 
@@ -10,12 +10,17 @@ function LenderPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [balance, setBalance] = useState<string>("");
 
-  const connectLender = async () => {
-    const accounts = await provider.listAccounts();
-    const lender = accounts[0].address;
-    setAccount(lender);
-    await loadBalance(lender);
-  };
+  // 🔌 Auto-connect on mount
+  useEffect(() => {
+    const connectLender = async () => {
+      const accounts = await provider.listAccounts();
+      const lender = accounts[0].address; // lender = deployer
+      setAccount(lender);
+      await loadBalance(lender);
+    };
+
+    connectLender();
+  }, []);
 
   const loadBalance = async (addr: string) => {
     const signer = await provider.getSigner(addr);
@@ -27,11 +32,7 @@ function LenderPage() {
   return (
     <Box p={8}>
       <Heading mb={4}>Lender Dashboard</Heading>
-      {!account ? (
-        <Button colorScheme="teal" onClick={connectLender}>
-          Connect as Lender
-        </Button>
-      ) : (
+      {account ? (
         <>
           <Text>Connected: {account}</Text>
           <Text>Outstanding Balance: {balance}</Text>
@@ -39,6 +40,8 @@ function LenderPage() {
             You are the lender. You can only view repayments.
           </Text>
         </>
+      ) : (
+        <Text>Connecting to lender account...</Text>
       )}
     </Box>
   );
